@@ -3,7 +3,7 @@
 USE [BRT-10059058];
 
 -- Declare variables and a temporary table to store results
-DECLARE @SearchStr nvarchar(100) = 'A1101002287' --This is what we are looking for
+DECLARE @SearchStr nvarchar(100) = 'A1101002287' --This is what I am looking for
 DECLARE @Results TABLE(ColumnName nvarchar(370), ColumnValue nvarchar(3630))
 DECLARE @TableName nvarchar(256), @ColumnName nvarchar(128), @SearchStr2 nvarchar(110)
 
@@ -26,10 +26,13 @@ BEGIN
             AND OBJECTPROPERTY(OBJECT_ID(QUOTENAME(TABLE_SCHEMA) + '.' + QUOTENAME(TABLE_NAME)), 'IsMSShipped') = 0
     )
 
+    -- Display current table being searched
+    RAISERROR ('Searching in table: %s', 0, 1, @TableName) WITH NOWAIT
+
     -- Loop through the columns of the current table
     WHILE (@TableName IS NOT NULL) AND (@ColumnName IS NOT NULL)
     BEGIN
-        -- Fetch the next column
+        -- Fetch the next column that contains "ID"
         SET @ColumnName =
         (
             SELECT MIN(QUOTENAME(COLUMN_NAME))
@@ -38,6 +41,7 @@ BEGIN
                 AND TABLE_NAME = PARSENAME(@TableName, 1)
                 AND DATA_TYPE IN ('char', 'varchar', 'nchar', 'nvarchar', 'text', 'ntext') -- Focus on string data types
                 AND QUOTENAME(COLUMN_NAME) > @ColumnName
+                AND COLUMN_NAME LIKE '%ID%' -- This is the added filter for columns containing "ID"
         )
 
         -- If a column is found, perform the search
